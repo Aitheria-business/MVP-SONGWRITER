@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Prompt Generator</title>
+<style>
+:root {
+  --bg: #0e0e12;
+  --surface: #16161d;
+  --surface2: #1e1e28;
+  --border: #2a2a38;
+  --text: #e0dfe6;
+  --text-dim: #8888a0;
+  --accent: #7c6df0;
+  --accent-hover: #9082f5;
+  --danger: #e05555;
+  --success: #4ec99c;
+  --warning: #e8a848;
+  --suno: #f97316;
+  --udio: #3b82f6;
+  --eleven: #a855f7;
+  --radius: 8px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 2rem; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; }
+.card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.6rem 0.8rem;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 80px; }
+select { cursor: pointer; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.form-group { margin-bottom: 1rem; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); background: var(--surface); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+
+/* Tag input */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+  min-height: 1.5rem;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  background: rgba(124,109,240,0.15);
+  border: 1px solid rgba(124,109,240,0.3);
+  border-radius: 14px;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+.tag .remove {
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  line-height: 1;
+}
+.tag .remove:hover { opacity: 1; color: var(--danger); }
+
+.neg-tag {
+  background: rgba(224,85,85,0.1);
+  border-color: rgba(224,85,85,0.25);
+  color: var(--danger);
+}
+
+/* Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.slider-row input[type="range"] { flex: 1; }
+.slider-val {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  min-width: 3.5rem;
+  text-align: right;
+  color: var(--accent);
+}
+
+/* Quick-pick buttons */
+.quick-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+.quick-pick {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.quick-pick:hover { border-color: var(--accent); color: var(--text); }
+.quick-pick.selected { border-color: var(--accent); background: rgba(124,109,240,0.15); color: var(--accent); }
+
+/* Output panels */
+.output-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+}
+.output-tab {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin-right: -1px;
+}
+.output-tab.active { background: var(--surface); color: var(--text); border-bottom: 1px solid var(--surface); }
+.output-tab[data-tab="suno"] { border-top: 2px solid var(--suno); }
+.output-tab[data-tab="udio"] { border-top: 2px solid var(--udio); }
+.output-tab[data-tab="eleven"] { border-top: 2px solid var(--eleven); }
+
+.output-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 var(--radius) var(--radius) var(--radius);
+  padding: 1.25rem;
+}
+
+.prompt-output {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.platform-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--border);
+}
+.platform-note.suno { border-left-color: var(--suno); }
+.platform-note.udio { border-left-color: var(--udio); }
+.platform-note.eleven { border-left-color: var(--eleven); }
+
+.copy-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--success);
+  color: #000;
+  padding: 0.5rem 1.2rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+.copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0 1.5rem;
+}
+
+.hidden { display: none !important; }
+.text-dim { color: var(--text-dim); }
+.text-sm { font-size: 0.82rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+
+@media (max-width: 600px) {
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .app { padding: 1rem 1rem 3rem; }
+  .output-tabs { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Music Prompt Generator</h1>
+  <p class="subtitle">Fill out the form, get tailored prompts for Suno, Udio, and ElevenLabs Music.</p>
+
+  <!-- GENRE & STYLE -->
+  <div class="card">
+    <h2>Genre &amp; Style</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Primary genre</label>
+        <select id="genre">
+          <option value="">Select...</option>
+          <option>Pop</option>
+          <option>Rock</option>
+          <option>Indie</option>
+          <option>Folk</option>
+          <option>Country</option>
+          <option>R&B</option>
+          <option>Soul</option>
+          <option>Hip Hop</option>
+          <option>Electronic</option>
+          <option>Dance</option>
+          <option>Jazz</option>
+          <option>Blues</option>
+          <option>Classical</option>
+          <option>Cinematic</option>
+          <option>Ambient</option>
+          <option>Lo-fi</option>
+          <option>Metal</option>
+          <option>Punk</option>
+          <option>Reggae</option>
+          <option>Latin</option>
+          <option>World</option>
+          <option>Gospel</option>
+          <option>Funk</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Sub-genre / fusion</label>
+        <input type="text" id="subgenre" placeholder="e.g. dreampop, neo-soul, folktronica">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Style tags</label>
+      <div class="tag-container" id="style-tags"></div>
+      <input type="text" id="style-tag-input" placeholder="Type and press Enter to add..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();addTag('style-tags','style-tag-input')}">
+      <div class="quick-picks" id="style-picks">
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">acoustic</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">cinematic</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">dreamy</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">ethereal</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">gritty</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">lush</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">minimalist</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">orchestral</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">polished</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">raw</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">retro</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'style-tags')">warm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOOD & EMOTION -->
+  <div class="card">
+    <h2>Mood &amp; Emotion</h2>
+    <div class="form-group">
+      <label>Primary mood</label>
+      <select id="mood">
+        <option value="">Select...</option>
+        <option>Joyful</option>
+        <option>Romantic</option>
+        <option>Bittersweet</option>
+        <option>Melancholic</option>
+        <option>Nostalgic</option>
+        <option>Triumphant</option>
+        <option>Peaceful</option>
+        <option>Uplifting</option>
+        <option>Hopeful</option>
+        <option>Tender</option>
+        <option>Intense</option>
+        <option>Playful</option>
+        <option>Whimsical</option>
+        <option>Dark</option>
+        <option>Sentimental</option>
+        <option>Wistful</option>
+        <option>Energetic</option>
+        <option>Contemplative</option>
+        <option>Dreamy</option>
+        <option>Empowering</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Energy level</label>
+      <div class="slider-row">
+        <input type="range" min="0" max="100" value="50" id="energy"
+          oninput="document.getElementById('energy-val').textContent=['very low','low','medium','medium-high','high'][Math.min(4,Math.floor(this.value/20))]">
+        <span class="slider-val" id="energy-val">medium</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Emotional arc</label>
+      <select id="arc">
+        <option value="">None / steady</option>
+        <option value="builds">Builds — starts quiet, grows</option>
+        <option value="drops">Drops — starts strong, strips back</option>
+        <option value="swells">Swells — rises and falls</option>
+        <option value="climax_late">Late climax — holds back, peaks near end</option>
+        <option value="tension_release">Tension and release</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TEMPO & KEY -->
+  <div class="card">
+    <h2>Tempo &amp; Key</h2>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>BPM</label>
+        <div class="slider-row">
+          <input type="range" min="40" max="200" value="100" id="bpm"
+            oninput="document.getElementById('bpm-val').textContent=this.value">
+          <span class="slider-val" id="bpm-val">100</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Time signature</label>
+        <select id="time-sig">
+          <option value="4/4">4/4</option>
+          <option value="3/4">3/4 (waltz)</option>
+          <option value="6/8">6/8</option>
+          <option value="free">Free time</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Key</label>
+        <select id="key">
+          <option value="">Any / not specified</option>
+          <option>C major</option><option>C minor</option>
+          <option>D major</option><option>D minor</option>
+          <option>E major</option><option>E minor</option>
+          <option>F major</option><option>F minor</option>
+          <option>G major</option><option>G minor</option>
+          <option>A major</option><option>A minor</option>
+          <option>B major</option><option>B minor</option>
+          <option>Bb major</option><option>Bb minor</option>
+          <option>Eb major</option><option>Eb minor</option>
+          <option>Ab major</option><option>Ab minor</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTRUMENTS -->
+  <div class="card">
+    <h2>Instruments &amp; Sound</h2>
+    <div class="form-group">
+      <label>Instruments</label>
+      <div class="tag-container" id="instrument-tags"></div>
+      <input type="text" id="instrument-tag-input" placeholder="Type and press Enter..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();addTag('instrument-tags','instrument-tag-input')}">
+      <div class="quick-picks">
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">acoustic guitar</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">electric guitar</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">piano</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">keys</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">synth</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">strings</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">violin</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">cello</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">bass</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">drums</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">percussion</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">horns</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">saxophone</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">trumpet</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">flute</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">harmonica</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">banjo</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">ukulele</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">mandolin</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">harp</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">organ</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'instrument-tags')">808s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOCALS -->
+  <div class="card">
+    <h2>Vocals</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Vocal presence</label>
+        <select id="vocal-presence" onchange="toggleVocalFields()">
+          <option value="instrumental">Instrumental (no vocals)</option>
+          <option value="vocals">Vocals present</option>
+          <option value="wordless">Wordless vocals (hums, oohs)</option>
+        </select>
+      </div>
+      <div class="form-group" id="vocal-type-group">
+        <label>Vocal type</label>
+        <select id="vocal-type">
+          <option value="">Select...</option>
+          <option>Male vocal</option>
+          <option>Female vocal</option>
+          <option>Duet</option>
+          <option>Choir</option>
+          <option>Harmonies</option>
+        </select>
+      </div>
+    </div>
+    <div id="vocal-detail-group">
+      <div class="form-group">
+        <label>Vocal style / delivery</label>
+        <div class="tag-container" id="vocal-tags"></div>
+        <input type="text" id="vocal-tag-input" placeholder="Type and press Enter..."
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addTag('vocal-tags','vocal-tag-input')}">
+        <div class="quick-picks">
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">intimate</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">breathy</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">powerful</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">raspy</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">smooth</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">soulful</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">falsetto</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">conversational</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">belting</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">whispery</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">storytelling</span>
+          <span class="quick-pick" onclick="toggleQuickTag(this,'vocal-tags')">operatic</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTION -->
+  <div class="card">
+    <h2>Production &amp; Era</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Production style</label>
+        <select id="production">
+          <option value="">Not specified</option>
+          <option>Lo-fi / bedroom</option>
+          <option>Clean / polished</option>
+          <option>Analog / tape warmth</option>
+          <option>Digital / crisp</option>
+          <option>Live / organic</option>
+          <option>Overproduced / maximalist</option>
+          <option>Stripped / minimal</option>
+          <option>Saturated / distorted</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Era / decade feel</label>
+        <select id="era">
+          <option value="">Not specified</option>
+          <option>1950s</option>
+          <option>1960s</option>
+          <option>1970s</option>
+          <option>1980s</option>
+          <option>1990s</option>
+          <option>2000s</option>
+          <option>2010s</option>
+          <option>Modern / contemporary</option>
+          <option>Timeless</option>
+          <option>Futuristic</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRUCTURE -->
+  <div class="card">
+    <h2>Structure &amp; Duration</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Song structure</label>
+        <select id="structure">
+          <option value="">Default / platform decides</option>
+          <option value="intro-verse-chorus-verse-chorus-bridge-chorus-outro">Intro-V-C-V-C-Bridge-C-Outro</option>
+          <option value="verse-chorus-verse-chorus">V-C-V-C</option>
+          <option value="verse-verse-chorus">V-V-C</option>
+          <option value="AABA">AABA</option>
+          <option value="through-composed">Through-composed</option>
+          <option value="loop-based">Loop-based / repetitive</option>
+          <option value="freeform">Freeform</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Target duration</label>
+        <select id="duration">
+          <option value="">Default</option>
+          <option value="short">Short (~1-2 min)</option>
+          <option value="standard">Standard (~3-4 min)</option>
+          <option value="extended">Extended (~5+ min)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERENCE & CONTEXT -->
+  <div class="card">
+    <h2>References &amp; Context</h2>
+    <div class="form-group">
+      <label>Reference artists / songs <span class="text-dim">(for style direction, not to copy)</span></label>
+      <input type="text" id="references" placeholder='e.g. "the warmth of Bon Iver meets the production of James Blake"'>
+    </div>
+    <div class="form-group">
+      <label>Additional context / free description</label>
+      <textarea id="context" rows="3" placeholder="Anything else about the sound you're after..."></textarea>
+    </div>
+  </div>
+
+  <!-- AVOID -->
+  <div class="card">
+    <h2>Avoid</h2>
+    <div class="form-group">
+      <label>Elements to exclude</label>
+      <div class="tag-container" id="avoid-tags"></div>
+      <input type="text" id="avoid-tag-input" placeholder="Type and press Enter..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();addTag('avoid-tags','avoid-tag-input')}">
+      <div class="quick-picks">
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">autotune</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">distortion</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">electronic drums</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">heavy bass</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">noise</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">reverb</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">synths</span>
+        <span class="quick-pick" onclick="toggleQuickTag(this,'avoid-tags')">trap beats</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERATE -->
+  <hr class="section-divider">
+  <div style="text-align:center; margin-bottom: 1.5rem;">
+    <button class="btn btn-primary" style="padding: 0.75rem 2.5rem; font-size: 1rem;" onclick="generate()">Generate prompts</button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div id="output-section" class="hidden">
+    <div class="output-tabs">
+      <div class="output-tab active" data-tab="suno" onclick="switchTab('suno')">Suno</div>
+      <div class="output-tab" data-tab="udio" onclick="switchTab('udio')">Udio</div>
+      <div class="output-tab" data-tab="eleven" onclick="switchTab('eleven')">ElevenLabs</div>
+    </div>
+    <div class="output-panel">
+      <div id="panel-suno"></div>
+      <div id="panel-udio" class="hidden"></div>
+      <div id="panel-eleven" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<div class="copy-toast" id="toast">Copied to clipboard</div>
+
+<script>
+// ─── Tag system ───
+const tagState = {
+  'style-tags': [],
+  'instrument-tags': [],
+  'vocal-tags': [],
+  'avoid-tags': [],
+};
+
+function renderTags(containerId) {
+  const el = document.getElementById(containerId);
+  const isAvoid = containerId === 'avoid-tags';
+  el.innerHTML = tagState[containerId].map((t, i) =>
+    `<span class="tag ${isAvoid ? 'neg-tag' : ''}">${esc(t)}<span class="remove" onclick="removeTag('${containerId}',${i})">&times;</span></span>`
+  ).join('');
+}
+
+function addTag(containerId, inputId) {
+  const input = document.getElementById(inputId);
+  const val = input.value.trim().toLowerCase();
+  if (!val || tagState[containerId].includes(val)) { input.value = ''; return; }
+  tagState[containerId].push(val);
+  input.value = '';
+  renderTags(containerId);
+  syncQuickPicks(containerId);
+}
+
+function removeTag(containerId, i) {
+  tagState[containerId].splice(i, 1);
+  renderTags(containerId);
+  syncQuickPicks(containerId);
+}
+
+function toggleQuickTag(btn, containerId) {
+  const val = btn.textContent.trim().toLowerCase();
+  const idx = tagState[containerId].indexOf(val);
+  if (idx >= 0) {
+    tagState[containerId].splice(idx, 1);
+    btn.classList.remove('selected');
+  } else {
+    tagState[containerId].push(val);
+    btn.classList.add('selected');
+  }
+  renderTags(containerId);
+}
+
+function syncQuickPicks(containerId) {
+  const parent = document.getElementById(containerId).closest('.form-group') || document.getElementById(containerId).closest('.card');
+  if (!parent) return;
+  parent.querySelectorAll('.quick-pick').forEach(btn => {
+    const val = btn.textContent.trim().toLowerCase();
+    btn.classList.toggle('selected', tagState[containerId].includes(val));
+  });
+}
+
+// ─── Vocal fields toggle ───
+function toggleVocalFields() {
+  const presence = document.getElementById('vocal-presence').value;
+  const typeGroup = document.getElementById('vocal-type-group');
+  const detailGroup = document.getElementById('vocal-detail-group');
+  if (presence === 'instrumental') {
+    typeGroup.classList.add('hidden');
+    detailGroup.classList.add('hidden');
+  } else {
+    typeGroup.classList.remove('hidden');
+    detailGroup.classList.remove('hidden');
+  }
+}
+
+// ─── Tab switching ───
+function switchTab(tab) {
+  document.querySelectorAll('.output-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  ['suno', 'udio', 'eleven'].forEach(p => {
+    document.getElementById('panel-' + p).classList.toggle('hidden', p !== tab);
+  });
+}
+
+// ─── Gather form data ───
+function gatherData() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const energy = +document.getElementById('energy').value;
+  const energyLabel = ['very low', 'low', 'medium', 'medium-high', 'high'][Math.min(4, Math.floor(energy / 20))];
+
+  return {
+    genre: v('genre'),
+    subgenre: v('subgenre'),
+    styleTags: [...tagState['style-tags']],
+    mood: v('mood'),
+    energy: energyLabel,
+    arc: v('arc'),
+    bpm: v('bpm'),
+    timeSig: v('time-sig'),
+    key: v('key'),
+    instruments: [...tagState['instrument-tags']],
+    vocalPresence: v('vocal-presence'),
+    vocalType: v('vocal-type'),
+    vocalStyle: [...tagState['vocal-tags']],
+    production: v('production'),
+    era: v('era'),
+    structure: v('structure'),
+    duration: v('duration'),
+    references: v('references'),
+    context: v('context'),
+    avoid: [...tagState['avoid-tags']],
+  };
+}
+
+// ─── Suno prompt ───
+function buildSuno(d) {
+  // Suno works best with comma-separated style tags in the "Style of Music" field
+  const parts = [];
+
+  if (d.genre) parts.push(d.genre);
+  if (d.subgenre) parts.push(d.subgenre);
+  parts.push(...d.styleTags);
+
+  if (d.mood) parts.push(d.mood.toLowerCase());
+  if (d.energy && d.energy !== 'medium') parts.push(d.energy + ' energy');
+
+  if (d.instruments.length) parts.push(...d.instruments);
+
+  if (d.vocalPresence === 'instrumental') {
+    parts.push('instrumental');
+  } else if (d.vocalPresence === 'wordless') {
+    parts.push('wordless vocals', 'humming');
+  } else if (d.vocalPresence === 'vocals') {
+    if (d.vocalType) parts.push(d.vocalType.toLowerCase());
+    parts.push(...d.vocalStyle);
+  }
+
+  if (d.production) parts.push(d.production.toLowerCase());
+  if (d.era) parts.push(d.era + ' style');
+  if (d.timeSig && d.timeSig !== '4/4') parts.push(d.timeSig + ' time');
+  if (d.bpm) parts.push(d.bpm + ' bpm');
+  if (d.key) parts.push(d.key);
+
+  if (d.arc) {
+    const arcMap = {
+      'builds': 'building intensity',
+      'drops': 'starts strong then strips back',
+      'swells': 'dynamic swells',
+      'climax_late': 'slow build to late climax',
+      'tension_release': 'tension and release',
+    };
+    if (arcMap[d.arc]) parts.push(arcMap[d.arc]);
+  }
+
+  if (d.references) parts.push('influenced by ' + d.references);
+  if (d.context) parts.push(d.context);
+
+  const prompt = parts.filter(Boolean).join(', ');
+
+  let negPrompt = '';
+  if (d.avoid.length) {
+    negPrompt = d.avoid.join(', ');
+  }
+
+  let notes = '';
+  if (d.structure) notes += `Structure: paste "${d.structure}" in the structure field if available.\n`;
+  if (d.duration) {
+    const durMap = { short: '~1-2 minutes', standard: '~3-4 minutes', extended: '~5+ minutes' };
+    notes += `Duration: aim for ${durMap[d.duration] || d.duration}.\n`;
+  }
+
+  return { prompt, negPrompt, notes };
+}
+
+// ─── Udio prompt ───
+function buildUdio(d) {
+  // Udio uses a more descriptive prompt and supports negative prompts
+  const parts = [];
+
+  if (d.genre) parts.push(d.genre);
+  if (d.subgenre) parts.push(d.subgenre);
+  parts.push(...d.styleTags);
+
+  if (d.mood) parts.push(d.mood.toLowerCase());
+  if (d.energy && d.energy !== 'medium') parts.push(d.energy + ' energy');
+
+  if (d.instruments.length) parts.push(...d.instruments);
+
+  if (d.vocalPresence === 'instrumental') {
+    parts.push('instrumental');
+  } else if (d.vocalPresence === 'wordless') {
+    parts.push('wordless vocals', 'vocalizations', 'humming');
+  } else if (d.vocalPresence === 'vocals') {
+    if (d.vocalType) parts.push(d.vocalType.toLowerCase());
+    parts.push(...d.vocalStyle);
+  }
+
+  if (d.production) parts.push(d.production.toLowerCase());
+  if (d.era) parts.push(d.era);
+  if (d.timeSig && d.timeSig !== '4/4') parts.push(d.timeSig);
+  if (d.bpm) parts.push(d.bpm + ' bpm');
+  if (d.key) parts.push(d.key);
+
+  if (d.arc) {
+    const arcMap = {
+      'builds': 'gradually building intensity',
+      'drops': 'starts powerful then strips to bare elements',
+      'swells': 'dynamic swells and recessions',
+      'climax_late': 'restrained verses building to a powerful late climax',
+      'tension_release': 'cycles of tension and release',
+    };
+    if (arcMap[d.arc]) parts.push(arcMap[d.arc]);
+  }
+
+  if (d.references) parts.push('in the style of ' + d.references);
+  if (d.context) parts.push(d.context);
+
+  const prompt = parts.filter(Boolean).join(', ');
+
+  let negPrompt = '';
+  if (d.avoid.length) {
+    negPrompt = d.avoid.join(', ');
+  }
+  if (d.vocalPresence === 'instrumental') {
+    negPrompt = negPrompt ? negPrompt + ', vocals, singing, voice' : 'vocals, singing, voice';
+  }
+
+  let notes = '';
+  if (d.duration) {
+    const durMap = { short: 'Generate a shorter clip.', standard: 'Standard length.', extended: 'Use extend feature to reach 5+ minutes.' };
+    notes += durMap[d.duration] || '';
+    notes += '\n';
+  }
+
+  return { prompt, negPrompt, notes };
+}
+
+// ─── ElevenLabs Music prompt ───
+function buildElevenLabs(d) {
+  // ElevenLabs uses natural language descriptions
+  const sentences = [];
+
+  // Opening genre/style sentence
+  let opener = '';
+  if (d.genre) {
+    opener = `A ${d.mood ? d.mood.toLowerCase() + ' ' : ''}${d.genre.toLowerCase()}`;
+    if (d.subgenre) opener += ` / ${d.subgenre}`;
+    opener += ' track';
+  } else {
+    opener = `A ${d.mood ? d.mood.toLowerCase() + ' ' : ''}track`;
+  }
+
+  if (d.energy && d.energy !== 'medium') opener += ` with ${d.energy} energy`;
+  opener += '.';
+  sentences.push(opener);
+
+  // Instruments
+  if (d.instruments.length) {
+    if (d.instruments.length === 1) {
+      sentences.push(`Features ${d.instruments[0]}.`);
+    } else {
+      const last = d.instruments[d.instruments.length - 1];
+      const rest = d.instruments.slice(0, -1).join(', ');
+      sentences.push(`Features ${rest} and ${last}.`);
+    }
+  }
+
+  // Vocals
+  if (d.vocalPresence === 'instrumental') {
+    sentences.push('Instrumental, no vocals.');
+  } else if (d.vocalPresence === 'wordless') {
+    sentences.push('Wordless vocals — hums, oohs, and vocalizations.');
+  } else if (d.vocalPresence === 'vocals') {
+    let vLine = '';
+    if (d.vocalType) vLine = d.vocalType;
+    if (d.vocalStyle.length) {
+      vLine += (vLine ? ', ' : '') + d.vocalStyle.join(', ') + ' delivery';
+    }
+    if (vLine) sentences.push(vLine + '.');
+  }
+
+  // Style / production
+  const styleWords = [...d.styleTags];
+  if (d.production) styleWords.push(d.production.toLowerCase());
+  if (d.era) styleWords.push(d.era + ' sound');
+  if (styleWords.length) sentences.push(styleWords.join(', ') + '.');
+
+  // Tempo and key
+  const techParts = [];
+  if (d.bpm) techParts.push(d.bpm + ' BPM');
+  if (d.timeSig && d.timeSig !== '4/4') techParts.push('in ' + d.timeSig);
+  if (d.key) techParts.push(d.key);
+  if (techParts.length) sentences.push(techParts.join(', ') + '.');
+
+  // Arc
+  if (d.arc) {
+    const arcMap = {
+      'builds': 'Starts quiet and gradually builds in intensity.',
+      'drops': 'Opens with power and gradually strips back to bare elements.',
+      'swells': 'Dynamic — rises and falls throughout.',
+      'climax_late': 'Holds back, then peaks dramatically near the end.',
+      'tension_release': 'Alternates between tension and release.',
+    };
+    if (arcMap[d.arc]) sentences.push(arcMap[d.arc]);
+  }
+
+  // References
+  if (d.references) sentences.push(`Inspired by ${d.references}.`);
+
+  // Context
+  if (d.context) sentences.push(d.context);
+
+  // Avoid
+  if (d.avoid.length) sentences.push(`Avoid: ${d.avoid.join(', ')}.`);
+
+  const prompt = sentences.filter(Boolean).join(' ');
+
+  let notes = '';
+  if (d.duration) {
+    const durMap = { short: 'Set duration to ~1-2 minutes.', standard: 'Standard duration (~3-4 min).', extended: 'Set to maximum duration.' };
+    notes = durMap[d.duration] || '';
+  }
+
+  return { prompt, notes };
+}
+
+// ─── Generate ───
+function generate() {
+  const d = gatherData();
+
+  if (!d.genre && !d.subgenre && d.styleTags.length === 0) {
+    alert('Add at least a genre or style tags to generate prompts.');
+    return;
+  }
+
+  const suno = buildSuno(d);
+  const udio = buildUdio(d);
+  const eleven = buildElevenLabs(d);
+
+  // Render Suno
+  document.getElementById('panel-suno').innerHTML = `
+    <h3 class="mb-1">Style prompt</h3>
+    <div class="prompt-output" id="suno-prompt">${esc(suno.prompt)}</div>
+    <button class="btn btn-sm" onclick="copyText('suno-prompt')">Copy style prompt</button>
+    ${suno.negPrompt ? `
+      <h3 class="mb-1 mt-1">Negative prompt</h3>
+      <div class="prompt-output" id="suno-neg">${esc(suno.negPrompt)}</div>
+      <button class="btn btn-sm" onclick="copyText('suno-neg')">Copy negative prompt</button>
+    ` : ''}
+    ${suno.notes ? `<div class="platform-note suno mt-1">${esc(suno.notes)}</div>` : ''}
+  `;
+
+  // Render Udio
+  document.getElementById('panel-udio').innerHTML = `
+    <h3 class="mb-1">Prompt</h3>
+    <div class="prompt-output" id="udio-prompt">${esc(udio.prompt)}</div>
+    <button class="btn btn-sm" onclick="copyText('udio-prompt')">Copy prompt</button>
+    ${udio.negPrompt ? `
+      <h3 class="mb-1 mt-1">Negative prompt</h3>
+      <div class="prompt-output" id="udio-neg">${esc(udio.negPrompt)}</div>
+      <button class="btn btn-sm" onclick="copyText('udio-neg')">Copy negative prompt</button>
+    ` : ''}
+    ${udio.notes ? `<div class="platform-note udio mt-1">${esc(udio.notes)}</div>` : ''}
+  `;
+
+  // Render ElevenLabs
+  document.getElementById('panel-eleven').innerHTML = `
+    <h3 class="mb-1">Prompt</h3>
+    <div class="prompt-output" id="eleven-prompt">${esc(eleven.prompt)}</div>
+    <button class="btn btn-sm" onclick="copyText('eleven-prompt')">Copy prompt</button>
+    ${eleven.notes ? `<div class="platform-note eleven mt-1">${esc(eleven.notes)}</div>` : ''}
+  `;
+
+  document.getElementById('output-section').classList.remove('hidden');
+  document.getElementById('output-section').scrollIntoView({ behavior: 'smooth' });
+  switchTab('suno');
+}
+
+// ─── Helpers ───
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function copyText(elId) {
+  const text = document.getElementById(elId).textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// Init
+toggleVocalFields();
+</script>
+</body>
+</html>
