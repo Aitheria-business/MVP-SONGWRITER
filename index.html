@@ -257,6 +257,29 @@ input[type="range"]::-webkit-slider-thumb {
 .platform-note.udio { border-left-color: var(--udio); }
 .platform-note.eleven { border-left-color: var(--eleven); }
 
+.email-section {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.btn-email {
+  background: linear-gradient(135deg, var(--accent), #9b6df0);
+  border-color: var(--accent);
+  color: #fff;
+  padding: 0.65rem 1.8rem;
+  font-size: 0.9rem;
+}
+.btn-email:hover {
+  background: linear-gradient(135deg, var(--accent-hover), #b08af5);
+  border-color: var(--accent-hover);
+}
+.email-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 0.5rem;
+}
+
 .copy-toast {
   position: fixed;
   bottom: 2rem;
@@ -649,6 +672,10 @@ input[type="range"]::-webkit-slider-thumb {
       <div id="panel-suno"></div>
       <div id="panel-udio" class="hidden"></div>
       <div id="panel-eleven" class="hidden"></div>
+    </div>
+    <div class="email-section">
+      <button class="btn btn-email" onclick="emailResults()">Send prompts via email</button>
+      <p class="email-note">Opens your email client with all three prompts addressed to info@aitheria.io</p>
     </div>
   </div>
 </div>
@@ -1043,6 +1070,38 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ─── Email results ───
+function emailResults() {
+  const d = gatherData();
+  const suno = buildSuno(d);
+  const udio = buildUdio(d);
+  const eleven = buildElevenLabs(d);
+
+  const lines = [];
+  lines.push('=== SUNO ===');
+  lines.push('Style prompt: ' + suno.prompt);
+  if (suno.negPrompt) lines.push('Negative prompt: ' + suno.negPrompt);
+  if (suno.notes) lines.push('Notes: ' + suno.notes.trim());
+
+  lines.push('');
+  lines.push('=== UDIO ===');
+  lines.push('Prompt: ' + udio.prompt);
+  if (udio.negPrompt) lines.push('Negative prompt: ' + udio.negPrompt);
+  if (udio.notes) lines.push('Notes: ' + udio.notes.trim());
+
+  lines.push('');
+  lines.push('=== ELEVENLABS ===');
+  lines.push('Prompt: ' + eleven.prompt);
+  if (eleven.notes) lines.push('Notes: ' + eleven.notes.trim());
+
+  const genre = d.genre || d.subgenre || 'Custom';
+  const subject = `Music Prompt: ${genre}${d.mood ? ' / ' + d.mood : ''}`;
+  const body = lines.join('\n');
+
+  const mailto = `mailto:info@aitheria.io?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailto;
 }
 
 // Init
